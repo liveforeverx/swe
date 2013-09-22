@@ -58,5 +58,3 @@ swepcalc.o: swepcalc.h swephexp.h sweodef.h swedll.h
 sweph.o: swejpl.h sweodef.h swephexp.h swedll.h sweph.h swephlib.h
 swephlib.o: swephexp.h sweodef.h swedll.h sweph.h swephlib.h
 swetest.o: swephexp.h sweodef.h swedll.h
-
-# swedate.с swehouse.с swejpl.с swemmoon.с swemplan.с swepcalc.с sweph.с swepdate.с swephlib.с swecl.с swehel.с
