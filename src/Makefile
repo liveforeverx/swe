@@ -13,15 +13,15 @@
 # send email to swisseph@astro.ch
 #
 
-CFLAGS = -g -O2 -Wall  	# for Linux and other gcc systems
-OP=$(CFLAGS)
+CFLAGS = -g -Wall -fPIC  	# for Linux and other gcc systems
+OP=$(CFLAGS)  
 CC=cc	#for Linux
 
 # compilation rule for general cases
 .o :
 	$(CC) $(OP) -o $@ $? -lm
 .c.o:
-	$(CC) -c $(OP) $<
+	$(CC) -c $(OP) $<     
 
 SWEOBJ = swedate.o swehouse.o swejpl.o swemmoon.o swemplan.o swepcalc.o sweph.o\
 	swepdate.o swephlib.o swecl.o swehel.o
@@ -43,7 +43,7 @@ libswe.so: $(SWEOBJ)
 
 clean:
 	rm -f *.o swetest libswe*
-
+	
 ###
 swecl.o: swejpl.h sweodef.h swephexp.h swedll.h sweph.h swephlib.h
 sweclips.o: sweodef.h swephexp.h swedll.h
