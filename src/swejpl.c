@@ -4,10 +4,8 @@
  |
  | Subroutines for reading JPL ephemerides.
  | derived from testeph.f as contained in DE403 distribution July 1995.
- | works with DE200, DE102, DE403, DE404, DE405, DE406. 
- | (attention, DE102 has 1950 reference frame and also DE4* has slightly
- | different reference frame from DE200. With DE4*, use routine 
- | IERS_FK5().)
+ | works with DE200, DE102, DE403, DE404, DE405, DE406, DE431
+ | (attention, these ephemerides do not have exactly the same reference frame)
 
   Authors: Dieter Koch and Alois Treindl, Astrodienst Zurich
 
@@ -66,6 +64,10 @@
   for promoting such software, products or services.
 */
 
+#if MSDOS
+#else
+  #define _FILE_OFFSET_BITS 64
+#endif
 
 #include <string.h>
 #include "swephexp.h"
@@ -79,14 +81,12 @@
   #define FSEEK _fseeki64
   #define FTELL _ftelli64
 #else
-  #define _FILE_OFFSET_BITS 64
   #define FSEEK fseeko
   #define FTELL ftello
 #endif
 
 #define DEBUG_DO_SHOW	FALSE
 
-#ifndef NO_JPL
 /*
  * local globals
  */
@@ -106,11 +106,11 @@ struct jpl_save {
   short do_km;
 };
 
-static struct jpl_save *FAR js;
+static TLS struct jpl_save *js;
 
 static int state (double et, int32 *list, int do_bary, 
 		  double *pv, double *pvsun, double *nut, char *serr);
-static int interp(double FAR *buf, double t, double intv, int32 ncfin, 
+static int interp(double *buf, double t, double intv, int32 ncfin, 
 		  int32 ncmin, int32 nain, int32 ifl, double *pv);
 static int32 fsizer(char *serr);
 static void reorder(char *x, int size, int number);
@@ -349,8 +349,8 @@ int swi_pleph(double et, int ntarg, int ncent, double *rrd, char *serr)
 {
   int i, retc;
   int32 list[12];
-  double FAR *pv = js->pv;
-  double FAR *pvsun = js->pvsun;
+  double *pv = js->pv;
+  double *pvsun = js->pvsun;
   for (i = 0; i < 6; ++i) 
     rrd[i] = 0.0;
   if (ntarg == ncent) 
@@ -455,18 +455,18 @@ int swi_pleph(double et, int ntarg, int ncent, double *rrd, char *serr)
  *      pv   d.p. interpolated quantities requested. 
  *           assumed dimension is pv(ncm,fl). 
  */
-static int interp(double FAR *buf, double t, double intv, int32 ncfin, 
+static int interp(double *buf, double t, double intv, int32 ncfin, 
 		  int32 ncmin, int32 nain, int32 ifl, double *pv)
 {
   /* Initialized data */
-  static int FAR np, nv;
-  static int FAR nac;
-  static int FAR njk;
-  static double FAR twot = 0.;
-  double FAR *pc = js->pc;
-  double FAR *vc = js->vc;
-  double FAR *ac = js->ac;
-  double FAR *jc = js->jc;
+  static TLS int np, nv;
+  static TLS int nac;
+  static TLS int njk;
+  static TLS double twot = 0.;
+  double *pc = js->pc;
+  double *vc = js->vc;
+  double *ac = js->ac;
+  double *jc = js->jc;
   int ncf = (int) ncfin;
   int ncm = (int) ncmin;
   int na = (int) nain;
@@ -641,15 +641,15 @@ static int state(double et, int32 *list, int do_bary,
   int i, j, k;
   int32 nseg;
   off_t flen, nb;
-  double FAR *buf = js->buf;
+  double *buf = js->buf;
   double aufac, s, t, intv, ts[4];
   int32 nrecl, ksize;
   int32 nr;
   double et_mn, et_fr;
-  int32 FAR *ipt = js->eh_ipt;
+  int32 *ipt = js->eh_ipt;
   char ch_ttl[252];
-  static int32 irecsz;
-  static int32 nrl, lpt[3], ncoeffs;
+  static TLS int32 irecsz;
+  static TLS int32 nrl, lpt[3], ncoeffs;
   if (js->jplfptr == NULL) {
     ksize = fsizer(serr); /* the number of single precision words in a record */
     nrecl = 4;
@@ -723,10 +723,6 @@ static int state(double et, int32 *list, int do_bary,
     nb *= 8;
     /* add size of header and constants section */
     nb += 2 * ksize * nrecl;
-#if 0
-    printf("hallo %d %d\n", nb, flen);
-    printf("hallo %d %d\n", nb-flen, ksize);
-#endif
     if (flen != nb 
       /* some of our files are one record too long */
       && flen - nb != ksize * nrecl
@@ -843,7 +839,7 @@ static int read_const_jpl(double *ss,  char *serr)
     ss[i] = js->eh_ss[i];
 #if DEBUG_DO_SHOW
   {
-    static char FAR *bname[] = {
+    static const char *bname[] = {
 	"Mercury", "Venus", "EMB", "Mars", "Jupiter", "Saturn", 
 	"Uranus", "Neptune", "Pluto", "Moon", "SunBary", "Nut", "Libr"};
     int j, k;
@@ -932,5 +928,4 @@ int32 swi_get_jpl_denum()
 {
   return js->eh_denum;
 }
-#endif	/* NO_JPL */
 
