@@ -1,5 +1,6 @@
 {application, swe,
   [{description,"Swiss Ephemerids"},
-   {vsn, "1.79.00"},
+   {vsn, "2.04.00"},
+   {registered, []},
    {applications,[kernel,stdlib]},
    {modules, []}]}.
